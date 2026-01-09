@@ -685,9 +685,12 @@ class ExecutionEngine:
         total_paths_by_module = {}
         for module_name in cfgs_by_module:
             single_paths_by_module[module_name] = list(product(*mapped_paths[module_name].values()))
-            total_paths_by_module[module_name] = list(tuple(product(single_paths_by_module[module_name], repeat=int(num_cycles))))
+            # total_paths_by_module[module_name] = list(tuple(product(single_paths_by_module[module_name], repeat=int(num_cycles))))
+            total_paths_by_module[module_name] = product(single_paths_by_module[module_name], repeat=int(num_cycles))
         keys, values = zip(*total_paths_by_module.items())
-        total_paths = [dict(zip(keys, path)) for path in product(*values)]
+        # total_paths = [dict(zip(keys, path)) for path in product(*values)]
+        total_paths_generator = (dict(zip(keys, path)) for path in product(*values))
+        print(f"Starting execution loop (Lazy Evaluation)...")
         #print(total_paths)
         
         #single_paths = list(product(*mapped_paths[manager.curr_module].values()))
@@ -695,7 +698,9 @@ class ExecutionEngine:
 
         # for each combinatoin of multicycle paths
 
-        for i in range(len(total_paths)):
+        # for i in range(len(total_paths)):
+        for i, curr_path_dict in enumerate(total_paths_generator):
+            manager.curr_path = i
             manager.curr_path = i
             manager.prev_store = state.store
             manager.init_state(state, manager.prev_store, ast)
@@ -716,7 +721,8 @@ class ExecutionEngine:
             # ! no longer path code as in bit string, but indices
 
 
-            curr_path = total_paths[i]
+            # curr_path = total_paths[i]
+            curr_path = curr_path_dict
             modules_seen = 0
             manager.executing = True
             
